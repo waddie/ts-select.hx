@@ -50,7 +50,7 @@ Optionally bind keys, for example:
 
 ```scheme
 (keymap (global)
-  (normal (space (s (q ":ts-select")
+  (normal (space (B (q ":ts-select")
                     (r ":ts-select-repeat")
                     (f ":ts-select-query (function_item) @f")))))
 ```
