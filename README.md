@@ -21,7 +21,7 @@ takes it from there.
 **`@select` wins.** A query that captures `@select` yields only those nodes, so
 other captures can exist purely to drive predicates:
 
-```
+```scheme
 ((identifier) @select (#match? @select "^is_"))
 ```
 
@@ -36,7 +36,7 @@ whole document. Narrowing is a matter of selecting first.
 
 Install with Forge:
 
-```
+```sh
 forge pkg install --git https://github.com/waddie/ts-select.hx
 ```
 
