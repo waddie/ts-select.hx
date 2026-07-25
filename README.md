@@ -77,6 +77,27 @@ your own doc string. e.g.
 
 ![Selecting all function names in Helix with a tree-sitter query](https://github.com/waddie/ts-select.hx/blob/main/images/ts-select.gif?raw=true)
 
+Queries can test structure as well as content. tree-sitter has no way to say
+“not a child of X”, but a doubled wildcard says the same thing sideways: a node
+with both a parent and a grandparent cannot be at the top of the file. That is
+enough to pick out inline lambdas and leave top-level definitions alone. The
+third pattern here needs no such test: a `letfn` binding looks like any other call
+on its own, so it is found by its position after the `letfn` symbol, which puts it
+below the top level by construction.
+
+```scheme
+;;@doc
+;; Select every Clojure lambda below the top level: (fn ...), (fn* ...) and
+;; #(...) nested at any depth, plus letfn bindings, skipping any written at the
+;; top of the file.
+(define (ts-select-clj-lambdas)
+  (ts-select-query
+    "(_ (_ (list_lit . (sym_lit) @_op) @select) (#any-of? @_op \"fn\" \"fn*\"))
+     (_ (_ (anon_fn_lit) @select))
+     (list_lit . (sym_lit) @_letfn . (vec_lit (list_lit) @select)
+       (#eq? @_letfn \"letfn\"))"))
+```
+
 ## Notes
 
 Overlapping captures collapse. Helix normalises a selection by sorting and
