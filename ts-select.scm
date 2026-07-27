@@ -75,19 +75,21 @@
                       #f)
                     (string->tsquery lang src))])
         (if query
-          (select-nodes! (query-nodes query lang) src)
+          ;; The spans are wanted twice: to run the query, and to say so when a
+          ;; scoped run comes back empty.
+          (let ([spans (scope-byte-spans)])
+            (select-nodes! (query-nodes query lang spans) src spans))
           void)))))
 
-;; Nodes captured by `query` across the scope, in no particular order. Helix
-;; sorts and merges them when the selection is built.
-(define (query-nodes query lang)
+;; Nodes captured by `query` across `spans`, in no particular order. Helix sorts
+;; and merges them when the selection is built.
+(define (query-nodes query lang spans)
   (let* ([doc (current-doc-id)]
          ;; The loader is consulted for every layer in range, injections
          ;; included. Returning #f for other languages is what stops, say, a Rust
          ;; query being compiled against the format-args grammar inside a
          ;; println!, which fails the whole run with "invalid node type".
-         [loader (tsquery-loader (lambda (l) (if (equal? l lang) query #f)))]
-         [spans (scope-byte-spans)])
+         [loader (tsquery-loader (lambda (l) (if (equal? l lang) query #f)))])
     (if (null? spans)
       (captured-nodes (query-document loader doc))
       (concat
@@ -128,9 +130,9 @@
 ;; Replace the selection with one forward range per node. Selection::push sorts
 ;; by start and merges overlaps, so nested captures collapse into one range and
 ;; the reported counts can differ.
-(define (select-nodes! nodes src)
+(define (select-nodes! nodes src spans)
   (if (null? nodes)
-    (set-status! "ts-select: no matches")
+    (set-status! (empty-summary spans))
     (let* ([rope (current-rope)]
            [ranges (map (lambda (n)
                          (range (node-start-char rope n) (node-end-char rope n)))
@@ -139,6 +141,16 @@
       (for-each push-range-to-selection! (cdr ranges))
       (set-box! *last-query* src)
       (set-status! (match-summary (length ranges))))))
+
+;; "no matches", naming the scope when there was one: an empty result from a
+;; scoped run usually means the selection was too narrow, not that the query was
+;; wrong. Only reached when every span came back empty, so it never claims the
+;; whole selection missed when part of it matched.
+(define (empty-summary spans)
+  (string-append "ts-select: no matches"
+    (if (null? spans)
+      ""
+      (string-append " in " (count-of (length spans) "selection" "selections")))))
 
 ;; "N matches", or "N matches (M selections)" when merging collapsed some.
 (define (match-summary matched)

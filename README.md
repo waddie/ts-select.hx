@@ -2,15 +2,14 @@
 
 Run an ad hoc tree-sitter query and select every node it captures, for Helix.
 
-Helix ships fixed textobject queries. This takes one you type at a prompt and
-turns each captured node into a range in the selection, so
+Helix ships fixed `textobject` queries. These commands accept an arbitrary
+query and turn each captured node into a range in the selection, so
 
 ```scheme
 (function_item) @f
 ```
 
-puts a cursor on every function in the buffer and normal multi-cursor editing
-takes it from there.
+puts a cursor on every function in the buffer.
 
 - `:ts-select` – prompt for a query and select the matches.
 - `:ts-select-repeat` – re-run the last query that matched, without prompting.
@@ -29,8 +28,8 @@ A query without `@select` yields every capture, which is what makes the one
 capture case short.
 
 **The selection is the scope.** When the selection covers more than a bare
-cursor the query runs inside it, one pass per range; otherwise it runs over the
-whole document. Narrowing is a matter of selecting first.
+cursor, the query runs inside it, one pass per range, narrowing the selection;
+otherwise it runs over the whole document.
 
 ## Install
 
@@ -78,12 +77,12 @@ your own doc string. e.g.
 ![Selecting all function names in Helix with a tree-sitter query](https://github.com/waddie/ts-select.hx/blob/main/images/ts-select.gif?raw=true)
 
 Queries can test structure as well as content. tree-sitter has no way to say
-“not a child of X”, but a doubled wildcard says the same thing sideways: a node
+“not a child of X”, but a doubled wildcard effectively says the same thing: a node
 with both a parent and a grandparent cannot be at the top of the file. That is
 enough to pick out inline lambdas and leave top-level definitions alone. The
 third pattern here needs no such test: a `letfn` binding looks like any other call
 on its own, so it is found by its position after the `letfn` symbol, which puts it
-below the top level by construction.
+below the top level by construction:
 
 ```scheme
 ;;@doc
