@@ -1,4 +1,4 @@
-# ts-select.hx
+# select-ts.hx
 
 Run an ad hoc tree-sitter query and select every node it captures, for Helix.
 
@@ -11,9 +11,9 @@ query and turn each captured node into a range in the selection, so
 
 puts a cursor on every function in the buffer.
 
-- `:ts-select` – prompt for a query and select the matches.
-- `:ts-select-repeat` – re-run the last query that matched, without prompting.
-- `:ts-select-query <query>` – run a query given directly, for keymaps.
+- `:select_ts` – prompt for a query and select the matches.
+- `:select_ts_repeat` – re-run the last query that matched, without prompting.
+- `:select_ts_query <query>` – run a query given directly, for keymaps.
 
 ## Conventions
 
@@ -36,45 +36,45 @@ otherwise it runs over the whole document.
 Install with Forge:
 
 ```sh
-forge pkg install --git https://github.com/waddie/ts-select.hx
+forge pkg install --git https://github.com/waddie/select-ts.hx
 ```
 
 Then in `~/.config/helix/init.scm`:
 
 ```scheme
-(require "ts-select.hx/ts-select.scm")
+(require "select-ts.hx/select-ts.scm")
 ```
 
 Optionally bind keys, for example:
 
 ```scheme
 (keymap (global)
-  (normal (space (B (q ":ts-select")
-                    (r ":ts-select-repeat")
-                    (f ":ts-select-query (function_item) @f")))))
+  (normal (space (B (q ":select_ts")
+                    (r ":select_ts_repeat")
+                    (f ":select_ts_query (function_item) @f")))))
 ```
 
-You can also create your functions that call `ts-select`, allowing you to add
+You can also create your functions that call `select_ts`, allowing you to add
 your own doc string. e.g.
 
 ```scheme
 ;;@doc
 ;; Select every Go function name in the buffer: plain funcs, receiver methods,
 ;; and interface method declarations.
-(define (ts-select-go-fns)
-  (ts-select-query
+(define (select_ts_go_fns)
+  (select_ts_query
     "[ (function_declaration name: (identifier) @select)
        (method_declaration name: (field_identifier) @select)
        (method_elem name: (field_identifier) @select) ]"))
 
 (keymap (global)
   (normal
-    (space (B (g ":ts-select-go-fns"))))
+    (space (B (g ":select_ts_go_fns"))))
   (select
-    (space (B (g ":ts-select-go-fns")))))
+    (space (B (g ":select_ts_go_fns")))))
 ```
 
-![Selecting all function names in Helix with a tree-sitter query](https://github.com/waddie/ts-select.hx/blob/main/images/ts-select.gif?raw=true)
+![Selecting all function names in Helix with a tree-sitter query](https://github.com/waddie/select-ts.hx/blob/main/images/select-ts.gif?raw=true)
 
 Queries can test structure as well as content. tree-sitter has no way to say
 “not a child of X”, but a doubled wildcard effectively says the same thing: a node
@@ -89,8 +89,8 @@ below the top level by construction:
 ;; Select every Clojure lambda below the top level: (fn ...), (fn* ...) and
 ;; #(...) nested at any depth, plus letfn bindings, skipping any written at the
 ;; top of the file.
-(define (ts-select-clj-lambdas)
-  (ts-select-query
+(define (select_ts_clj_lambdas)
+  (select_ts_query
     "(_ (_ (list_lit . (sym_lit) @_op) @select) (#any-of? @_op \"fn\" \"fn*\"))
      (_ (_ (anon_fn_lit) @select))
      (list_lit . (sym_lit) @_letfn . (vec_lit (list_lit) @select)
@@ -105,7 +105,7 @@ inside it produces one range, not two. The status line reports both counts when
 they differ.
 
 The builtin prompt has no history and takes no initial value, hence
-`:ts-select-repeat`. The last query is remembered only when it matched.
+`:select_ts_repeat`. The last query is remembered only when it matched.
 
 ## License
 

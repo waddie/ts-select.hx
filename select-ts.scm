@@ -1,4 +1,4 @@
-;; ts-select.scm - turn an ad hoc tree-sitter query into a multiple selection.
+;; select-ts.scm - turn an ad hoc tree-sitter query into a multiple selection.
 ;;
 ;; Helix ships fixed textobject queries; this runs one you type. Every node the
 ;; query captures becomes a range in the selection, so `(function_item) @f` puts
@@ -23,14 +23,14 @@
 (require "helix/static.scm") ; selection / range accessors and setters
 (require "helix/misc.scm") ; push-component!, set-status!, set-error!
 
-(provide ts-select
-  ts-select-repeat
-  ts-select-query)
+(provide select_ts
+  select_ts_repeat
+  select_ts_query)
 
 ;; Capture name that, when a query uses it, narrows the result to just its nodes.
 (define select-capture "select")
 
-;; Source of the last query that matched, for ts-select-repeat. The builtin
+;; Source of the last query that matched, for select_ts_repeat. The builtin
 ;; `prompt` component takes no initial value and keeps no history, so this is
 ;; the only way back to a query without retyping it.
 (define *last-query* (box #f))
@@ -38,7 +38,7 @@
 ;;@doc
 ;; Prompt for a tree-sitter query and select every node it captures. Honours the
 ;; `@select` capture and the current selection as a scope.
-(define (ts-select)
+(define (select_ts)
   (push-component!
     (prompt "ts query:"
       (lambda (src)
@@ -48,17 +48,17 @@
 
 ;;@doc
 ;; Re-run the last query that matched, without prompting.
-(define (ts-select-repeat)
+(define (select_ts_repeat)
   (let ([src (unbox *last-query*)])
     (if src
       (run-query src)
-      (set-status! "ts-select: no previous query"))))
+      (set-status! "select_ts: no previous query"))))
 
 ;;@doc
 ;; Run a query given directly rather than through the prompt. Variadic so a
-;; keymap can pass one unquoted, e.g. ":ts-select-query (function_item) @f";
+;; keymap can pass one unquoted, e.g. ":select_ts_query (function_item) @f";
 ;; Helix splits typed command arguments on whitespace and queries don't care.
-(define (ts-select-query . parts)
+(define (select_ts_query . parts)
   (run-query (string-join parts " ")))
 
 ;; Compile, run, select. Every entry point funnels through here so error
@@ -66,12 +66,12 @@
 (define (run-query src)
   (let ([lang (current-language)])
     (if (not lang)
-      (set-error! "ts-select: buffer has no language")
+      (set-error! "select_ts: buffer has no language")
       ;; A malformed query is the common case at a prompt, so report it and
       ;; leave the selection alone rather than letting the error escape.
       (let ([query (with-handler
                     (lambda (err)
-                      (set-error! (string-append "ts-select: " (to-string err)))
+                      (set-error! (string-append "select_ts: " (to-string err)))
                       #f)
                     (string->tsquery lang src))])
         (if query
@@ -147,7 +147,7 @@
 ;; wrong. Only reached when every span came back empty, so it never claims the
 ;; whole selection missed when part of it matched.
 (define (empty-summary spans)
-  (string-append "ts-select: no matches"
+  (string-append "select_ts: no matches"
     (if (null? spans)
       ""
       (string-append " in " (count-of (length spans) "selection" "selections")))))
@@ -155,7 +155,7 @@
 ;; "N matches", or "N matches (M selections)" when merging collapsed some.
 (define (match-summary matched)
   (let ([selected (length (selection->ranges (current-selection-object)))])
-    (string-append "ts-select: " (count-of matched "match" "matches")
+    (string-append "select_ts: " (count-of matched "match" "matches")
       (if (= matched selected)
         ""
         (string-append " (" (count-of selected "selection" "selections") ")")))))
