@@ -11,7 +11,7 @@
 ;;; Forge copies this directory to ~/.steel/cogs/ts-select.hx/.
 
 (define package-name 'ts-select.hx)
-(define version "0.1.0")
+(define version "0.2.0")
 
 ;; ts-utils.hx: shared tree-sitter glue, byte<->char conversion.
 (define dependencies
